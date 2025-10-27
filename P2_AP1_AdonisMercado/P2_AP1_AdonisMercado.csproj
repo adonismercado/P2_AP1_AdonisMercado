@@ -15,4 +15,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DAL\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>
