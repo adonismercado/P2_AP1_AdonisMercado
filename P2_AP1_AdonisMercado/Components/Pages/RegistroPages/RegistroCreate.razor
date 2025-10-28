@@ -1,4 +1,4 @@
-﻿@page "/info/{RegistradorIdP:int}"
+﻿@page "/info"
 
 <PageTitle>Crear Registro</PageTitle>
 <div class="container">
@@ -18,10 +18,64 @@
 				<input type="date" class="form-control" @bind="Fecha" />
 			</div>
 
-			@if (!string.IsNullOrWhiteSpace(errorMensaje))
-			{
-				<div class="alert alert-danger">@errorMensaje</div>
-			}
+			@* PICKER DE DETALLE *@
+
+			<div class="border border-success p-3 m-3">
+				<h3>Detalle</h3>
+
+				<hr class="py-1" />
+				<div class="col-auto input-group align-items-center">
+					<label class="col-form-label input-group-text">Seleccione:</label>
+
+					<InputSelect class="form-control form-select" @bind-Value="TipoId">
+						<option disabled value="0">Seleccione un tipo:</option>
+						@foreach (var tipo in ListaTipos)
+						{
+							<option value="@tipo.RegistroId">@tipo.RegistroId</option>
+						}
+					</InputSelect>
+
+					<label class="col-form-label input-group-text">Cantidad</label>
+					<input type="number" class="form-control" @bind="Cantidad" min="0"/>
+
+					<button type="button" class="btn btn-outline-success bi bi-plus"> Agregar</button>
+				</div>
+
+				@if (!string.IsNullOrWhiteSpace(errorMensaje))
+				{
+					<div class="alert alert-danger">@errorMensaje</div>
+				}
+
+				<hr class="py-1" />
+
+				<table class="table table-light table-bordered table-hover mt-2">
+					<thead>
+						<tr class="text-center">
+							<th>Tipo ID</th>
+							<th>Cantidad</th>
+							<th>Remover</th>
+						</tr>
+					</thead>
+
+					<tbody class="text-center">
+						<!-- FOREACH DE DETALLE -->
+						<tr>
+							<td><!--DESCRIPCION--></td>
+							<td><!--CANTIDAD--></td>
+							<td>
+								<button type="button" class="btn btn-outline-dark bi bi-trash">
+									<!--@onclick=() => remover detalle-->
+								</button>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<div class="mb-3 mt-2">
+					<label class="form-label"><strong>Total</strong></label>
+					<input class="form-control bg-light text-secondary" /> <!--value = calculo de total de precio-->
+				</div>
+			</div>
 		</div>
 
 		<div class="card-footer text-center">
@@ -42,4 +96,16 @@
 @code {
 	[Parameter]
 	public int? RegistroIdP { get; set; }
+
+	public int RegistroId;
+	public DateTime Fecha;
+	public string? errorMensaje;
+
+	// Lista de detalle
+	public List<Registros> ListaTipos { get; set; } = new();
+	public Registros Registros { get; set; } = new Registros();
+
+	// Datos del picker
+	public int TipoId { get; set; }
+	public int Cantidad { get; set; }
 }
