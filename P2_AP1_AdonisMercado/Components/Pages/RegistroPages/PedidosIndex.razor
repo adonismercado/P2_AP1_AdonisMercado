@@ -1,5 +1,5 @@
 ﻿@page "/index"
-@inject PedidosService registrosService
+@inject PedidosService pedidosService
 
 <PageTitle>Index de Registros</PageTitle>
 <div class="container">
@@ -83,14 +83,52 @@
 </div>
 
 @code {
-	public DateTime FechaDesde { get; set; }
-	public DateTime FechaHasta { get; set; }
+	public DateTime? FechaDesde { get; set; }
+	public DateTime? FechaHasta { get; set; }
 	public string ValorFiltro { get; set; }
 	public string Filtro { get; set; }
-	public List<Registros> ListaRegistros = new();
+	public List<Pedidos> ListaPedidos = new List<Pedidos>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		ListaPedidos = await pedidosService.Listar(p => p.PedidoId > 0);
+	}
 
 	public async Task Buscar()
 	{
-		
+		if (FechaDesde.HasValue && FechaHasta.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date >= FechaDesde.Value.Date && p.Fecha.Date <= FechaHasta.Value.Date
+			);
+		}
+		else if (FechaDesde.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date >= FechaDesde.Value.Date
+			);
+		}
+		else if (FechaHasta.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date <= FechaHasta.Value.Date
+			);
+		}
+
+		if (!string.IsNullOrWhiteSpace(ValorFiltro))
+		{
+			if (Filtro == "PedidoId" && int.TryParse(ValorFiltro, out var pedidoId))
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.PedidoId == pedidoId);
+			}
+			if (Filtro == "NombreCliente")
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.NombreCliente.ToLower().Contains(ValorFiltro));
+			}
+			if (Filtro == "Total" && decimal.TryParse(ValorFiltro, out var total))
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.Total == total);
+			}
+		}
 	}
 }
