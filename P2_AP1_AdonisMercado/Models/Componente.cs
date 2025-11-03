@@ -1,15 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace P2_AP1_AdonisMercado.Models
+namespace P2_AP1_AdonisMercado.Models;
+
+public class Componente
 {
-    public class Componente
-    {
-        [Key]
-        public int ComponenteId { get; set; }
-        public string Descripcion { get; set; } = string.Empty;
-        public decimal Precio { get; set; }
-        public int Existencia { get; set; }
-    }
-}
+    [Key]
+    public int ComponenteId { get; set; }
+    public string Descripcion { get; set; } = string.Empty;
+    public decimal Precio { get; set; }
+    public int Existencia { get; set; }
 }
