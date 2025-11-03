@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 namespace P2_AP1_AdonisMercado.Services;
 public class RegistrosService(IDbContextFactory<Contexto> DbFactory)
 {
-    public async Task<bool> Guardar(Registros registro)
+    public async Task<bool> Guardar(Pedidos registro)
     {
         if (!await Existe(registro.RegistroId))
         {
@@ -24,21 +24,21 @@ public class RegistrosService(IDbContextFactory<Contexto> DbFactory)
         return await contexto.Registros
             .AnyAsync(r => r.RegistroId == registroId);
     }
-    public async Task<bool> Insertar(Registros registro)
+    public async Task<bool> Insertar(Pedidos registro)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
         contexto.Registros.Add(registro);
         return await contexto.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> Modificar(Registros registro)
+    public async Task<bool> Modificar(Pedidos registro)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
         contexto.Registros.Update(registro);
         return await contexto.SaveChangesAsync() > 0;
     }
 
-    public async Task<List<Registros>> Listar(Expression<Func<Registros, bool>> criterio)
+    public async Task<List<Pedidos>> Listar(Expression<Func<Pedidos, bool>> criterio)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
         return await contexto.Registros
