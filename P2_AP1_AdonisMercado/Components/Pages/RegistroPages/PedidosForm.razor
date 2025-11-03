@@ -1,4 +1,7 @@
-﻿@page "/info"
+﻿@page "/form/{PedidoId:int?}"
+@inject PedidosService pedidosService
+@inject NavigationManager navigator
+@rendermode InteractiveServer
 
 <PageTitle>Crear Registro</PageTitle>
 <div class="container">
@@ -83,7 +86,7 @@
 				<span class="bi bi-arrow-left"></span> Volver
 			</a>
 
-			@if (RegistroIdP > 0)
+			@if (PedidoId.HasValue)
 			{
 				<button type="button" class="btn btn-danger">
 					<span class="bi bi-trash"></span> Eliminar
@@ -95,17 +98,65 @@
 
 @code {
 	[Parameter]
-	public int? RegistroIdP { get; set; }
-
-	public int RegistroId;
-	public DateTime Fecha;
+	public int? PedidoId { get; set; }
 	public string? errorMensaje;
 
 	// Lista de detalle
-	public List<Registros> ListaTipos { get; set; } = new();
-	public Registros Registros { get; set; } = new Registros();
+	public List<Componente> ListaComponentes { get; set; } = new();
+	public Pedidos Pedido { get; set; } = new Pedidos();
+	public PedidosDetalle DetalleSeleccionado = new();
 
-	// Datos del picker
-	public int TipoId { get; set; }
-	public int Cantidad { get; set; }
+	protected override async Task OnInitializedAsync()
+	{
+		ListaComponentes = await pedidosService.ListarComponentes();
+		if (PedidoId != null && PedidoId.HasValue)
+		{
+			Pedido = await pedidosService.Buscar(PedidoId.Value);
+		}
+	}
+
+	private async Task AgregarDetalle()
+	{
+		errorMensaje = null;
+
+		if (Pedido.NombreCliente == null)
+		{
+			errorMensaje = "El nombre del cliente no puede ser vacio. Intentelo de nuevo";
+			return;
+		}
+		if (DetalleSeleccionado.ComponenteId == 0)
+		{
+			errorMensaje = "Debe seleccionar al menos 1 componente. Intentelo de nuevo.";
+			return;
+		}
+		if (DetalleSeleccionado.Precio <= 0)
+		{
+			errorMensaje = "El precio debe ser mayor que 0. Intentelo de nuevo.";
+			return;
+		}
+		if (DetalleSeleccionado.Cantidad <= 0)
+		{
+			errorMensaje = "La cantidad debe ser mayor a 0. Intentelo de nuevo.";
+			return;
+		}
+
+		var componente = ListaComponentes.Single(c => c.ComponenteId == DetalleSeleccionado.ComponenteId);
+
+		var detalle = new PedidosDetalle
+		{
+			ComponenteId = componente.ComponenteId,
+			Cantidad = DetalleSeleccionado.Cantidad,
+			Precio = DetalleSeleccionado.Precio
+		};
+
+		Pedido.PedidosDetalles.Add(detalle);
+		DetalleSeleccionado = new PedidosDetalle();
+		await Task.CompletedTask;
+	}
+
+	private void RemoverDetalle(PedidosDetalle detalle)
+	{
+		Pedido.PedidosDetalles.Remove(detalle);
+		DetalleSeleccionado = detalle;
+	}
 }
