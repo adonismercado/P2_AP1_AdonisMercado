@@ -46,4 +46,28 @@ public class PedidosService(IDbContextFactory<Contexto> DbFactory)
             .AsNoTracking()
             .ToListAsync();
     }
+
+    public async Task<Pedidos?> Buscar(int pedidoId)
+    {
+        await using var contexto = await DbFactory.CreateDbContextAsync();
+        return await contexto.Pedidos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.PedidoId == pedidoId);
+    }
+    public async Task<bool> Eliminar(int pedidoId)
+    {
+        await using var contexto = await DbFactory.CreateDbContextAsync();
+
+        var pedido = await contexto.Pedidos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.PedidoId == pedidoId);
+
+        if (pedido == null)
+        {
+            return false;
+        }
+
+        contexto.Pedidos.Remove(pedido);
+        return await contexto.SaveChangesAsync() > 0;
+    }
 }
