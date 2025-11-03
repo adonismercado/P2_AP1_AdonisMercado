@@ -117,6 +117,19 @@
 		}
 	}
 
+	private async Task Guardar()
+	{
+		var created = await pedidosService.Guardar(Pedido);
+		if (created)
+		{
+			navigator.NavigateTo("/index");
+		}
+		else
+		{
+			errorMensaje = "No se pudo guardar o editar el pedido correctamente. Intentelo de nuevo.";
+		}
+	}
+
 	private async Task AgregarDetalle()
 	{
 		errorMensaje = null;
@@ -160,6 +173,19 @@
 	{
 		Pedido.PedidosDetalles.Remove(detalle);
 		DetalleSeleccionado = detalle;
+	}
+
+	private async Task Eliminar()
+	{
+		var eliminado = await pedidosService.Eliminar(Pedido.PedidoId);
+		if (eliminado)
+		{
+			navigator.NavigateTo("/index");
+		}
+		else
+		{
+			errorMensaje = "No se pudo eliminar el pedido correctamente. Intentelo de nuevo.";
+		}
 	}
 
 	private void MostrarModal()
