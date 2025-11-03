@@ -106,6 +106,8 @@
 	public Pedidos Pedido { get; set; } = new Pedidos();
 	public PedidosDetalle DetalleSeleccionado = new();
 
+	public bool mostrarModal = false;
+
 	protected override async Task OnInitializedAsync()
 	{
 		ListaComponentes = await pedidosService.ListarComponentes();
@@ -158,5 +160,15 @@
 	{
 		Pedido.PedidosDetalles.Remove(detalle);
 		DetalleSeleccionado = detalle;
+	}
+
+	private void MostrarModal()
+	{
+		mostrarModal = true;
+	}
+
+	private void CerrarModal()
+	{
+		mostrarModal = false;
 	}
 }
