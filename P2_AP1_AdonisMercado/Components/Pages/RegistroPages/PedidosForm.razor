@@ -7,18 +7,32 @@
 <div class="container">
 	<div class="card shadow-lg">
 		<div class="card-header text-center">
-			<h5 class="card-title">Crear Registro</h5>
+				@if (PedidoId > 0)
+				{
+					<h5 class="card-title">Editar Pedido</h5>
+				}
+				else
+				{
+					<h5 class="card-title">Crear Pedido</h5>
+				}
 		</div>
 
 		<div class="card-body">
-			<div class="mb-3">
-				<label class="form-label">Registro ID</label>
-				<InputNumber class="form-control" @bind-Value="RegistroId" readonly></InputNumber>
+			<div class="mb-3 justify-content-between">
+				<div class="mb-3">
+					<label class="form-label">Fecha</label>
+					<input type="date" class="form-control form-control-sm" @bind="Pedido.Fecha" />
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Pedido ID</label>
+					<InputNumber class="form-control form-control-sm" @bind-Value="Pedido.PedidoId" readonly></InputNumber>
+				</div>
 			</div>
 
 			<div class="mb-3">
-				<label class="form-label">Fecha</label>
-				<input type="date" class="form-control" @bind="Fecha" />
+				<label class="form-label">Nombre Cliente</label>
+				<input type="text" class="form-control" @bind="Pedido.NombreCliente" />
 			</div>
 
 			@* PICKER DE DETALLE *@
@@ -27,21 +41,27 @@
 				<h3>Detalle</h3>
 
 				<hr class="py-1" />
+
 				<div class="col-auto input-group align-items-center">
 					<label class="col-form-label input-group-text">Seleccione:</label>
 
-					<InputSelect class="form-control form-select" @bind-Value="TipoId">
+					<InputSelect class="form-control form-select" @bind-Value="DetalleSeleccionado.ComponenteId">
 						<option disabled value="0">Seleccione un tipo:</option>
-						@foreach (var tipo in ListaTipos)
+						@foreach (var comp in ListaComponentes)
 						{
-							<option value="@tipo.RegistroId">@tipo.RegistroId</option>
+							<option value="@comp.ComponenteId">@comp.ComponenteId - @comp.Descripcion (Existencia: @comp.Existencia)</option>
 						}
 					</InputSelect>
 
-					<label class="col-form-label input-group-text">Cantidad</label>
-					<input type="number" class="form-control" @bind="Cantidad" min="0"/>
+					<label class="col-form-label input-group-text">Precio</label>
+					<input type="number" class="form-control" @bind="DetalleSeleccionado.Precio" min="0" />
 
-					<button type="button" class="btn btn-outline-success bi bi-plus"> Agregar</button>
+					<label class="col-form-label input-group-text">Cantidad</label>
+					<input type="number" class="form-control" @bind="DetalleSeleccionado.Cantidad" min="0"/>
+
+					<button type="button" class="btn btn-outline-success">
+						<span class="bi bi-plus-square"></span>
+					</button>
 				</div>
 
 				@if (!string.IsNullOrWhiteSpace(errorMensaje))
@@ -54,29 +74,42 @@
 				<table class="table table-light table-bordered table-hover mt-2">
 					<thead>
 						<tr class="text-center">
-							<th>Tipo ID</th>
+							<th>Componente ID</th>
+							<th>Descripci&oacute;n</th>
+							<th>Precio</th>
 							<th>Cantidad</th>
-							<th>Remover</th>
+							<th>Importe</th>
+							<th>Acci&oacute;n</th>
 						</tr>
 					</thead>
 
 					<tbody class="text-center">
-						<!-- FOREACH DE DETALLE -->
-						<tr>
-							<td><!--DESCRIPCION--></td>
-							<td><!--CANTIDAD--></td>
-							<td>
-								<button type="button" class="btn btn-outline-dark bi bi-trash">
-									<!--@onclick=() => remover detalle-->
-								</button>
-							</td>
-						</tr>
+						@foreach (var detalle in Pedido.PedidosDetalles)
+						{
+							<tr>
+								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)</td>
+								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)?.Descripcion</td>
+								<td>@detalle.Precio</td>
+								<td>@detalle.Cantidad</td>
+								<td>@(detalle.Cantidad * detalle.Precio)</td>
+								<td>
+									<button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoverDetalle(detalle)">
+										<span class="bi bi-trash"></span>
+									</button>
+								</td>
+							</tr>
+						}
 					</tbody>
 				</table>
 
-				<div class="mb-3 mt-2">
-					<label class="form-label"><strong>Total</strong></label>
-					<input class="form-control bg-light text-secondary" /> <!--value = calculo de total de precio-->
+				<div class="justify-content-between">
+					<div class="input-group">
+						<label class="form-control">Conteo</label>
+						<input type="number" class="form-control form-control-sm" value="@Pedido.PedidosDetalles.Count()"/>
+
+						<label class="form-control">Total</label>
+						<input type="number" class="form-control form-control-sm" value="@Pedido.PedidosDetalles.Sum(p => p.Cantidad * p.Precio)" />
+					</div>
 				</div>
 			</div>
 		</div>
@@ -85,6 +118,10 @@
 			<a href="/index" class="btn btn-secondary">
 				<span class="bi bi-arrow-left"></span> Volver
 			</a>
+
+			<button type="button" class="btn btn-primary" @onclick="AgregarDetalle">
+				<span class="bi bi-save"></span> Guardar
+			</button>
 
 			@if (PedidoId.HasValue)
 			{
