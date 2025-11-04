@@ -1,0 +1,282 @@
+﻿@page "/form/{PedidoId:int?}"
+@inject PedidosService pedidosService
+@inject NavigationManager navigator
+@rendermode InteractiveServer
+
+<PageTitle>Crear Registro</PageTitle>
+<div class="container">
+	<div class="card shadow-lg">
+		<div class="card-header text-center">
+			@if (PedidoId > 0)
+			{
+				<h5 class="card-title"><strong>Editar Pedido</strong></h5>
+			}
+			else
+			{
+				<h5 class="card-title"><strong>Crear Pedido</strong></h5>
+			}
+		</div>
+
+		<div class="card-body">
+			<div class="mb-3 d-flex justify-content-between">
+				<div class="mb-3">
+					<label class="form-label">Pedido ID</label>
+					<InputNumber class="form-control" @bind-Value="Pedido.PedidoId" readonly></InputNumber>
+				</div>
+
+				<div class="mb-3">
+					<label class="form-label">Fecha</label>
+					<input type="date" class="form-control" @bind="Pedido.Fecha" />
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label">Nombre Cliente</label>
+				<input type="text" class="form-control" @bind="Pedido.NombreCliente" />
+			</div>
+
+			@* PICKER DE DETALLE *@
+
+			<hr />
+
+			<div class="border border-success p-3 m-3">
+				<h3>Detalle</h3>
+
+				<hr class="py-1" />
+
+				<div class="col-auto input-group align-items-center">
+					<label class="col-form-label input-group-text">Seleccione:</label>
+
+					<InputSelect class="form-control form-select" @bind-Value="DetalleSeleccionado.ComponenteId">
+						<option disabled value="0">Seleccione un tipo:</option>
+						@foreach (var comp in ListaComponentes)
+						{
+							<option value="@comp.ComponenteId">@comp.ComponenteId - @comp.Descripcion (Existencia: @comp.Existencia)</option>
+						}
+					</InputSelect>
+
+					<label class="col-form-label input-group-text">Precio:</label>
+					<input type="number" class="form-control" @bind="DetalleSeleccionado.Precio" min="0" />
+
+					<label class="col-form-label input-group-text">Cantidad:</label>
+					<input type="number" class="form-control" @bind="DetalleSeleccionado.Cantidad" min="0" />
+
+					<button type="button" class="btn btn-outline-success" @onclick="AgregarDetalle">
+						<span class="bi bi-plus-square"></span>
+					</button>
+				</div>
+
+				@if (!string.IsNullOrWhiteSpace(errorMensaje))
+				{
+					<div class="alert alert-danger">@errorMensaje</div>
+				}
+
+				<hr class="py-1" />
+
+				<table class="table table-light table-bordered table-hover mt-2">
+					<thead>
+						<tr class="text-center">
+							<th>Componente ID</th>
+							<th>Descripci&oacute;n</th>
+							<th>Precio</th>
+							<th>Cantidad</th>
+							<th>Importe</th>
+							<th>Acci&oacute;n</th>
+						</tr>
+					</thead>
+
+					<tbody class="text-center">
+						@foreach (var detalle in Pedido.PedidosDetalles)
+						{
+							<tr>
+								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)?.ComponenteId</td>
+								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)?.Descripcion</td>
+								@if (PedidoId.HasValue)
+								{
+									<td>
+										<input type="number" class="form-control" @bind="detalle.Precio" min="0" />
+									</td>
+									<td>
+										<input type="number" class="form-control" @bind="detalle.Cantidad" min="0" />
+									</td>
+								}
+								else
+								{
+									<td>@detalle.Precio</td>
+									<td>@detalle.Cantidad</td>
+								}
+								<td>@(detalle.Cantidad* detalle.Precio)</td>
+								<td>
+									<button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoverDetalle(detalle)">
+										<span class="bi bi-trash"></span>
+									</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+
+				<hr />
+				<div class="d-flex justify-content-between">
+					<div class="mb-3">
+						<label class="form-label">Conteo</label>
+						<input type="number" class="form-control text-secondary" value="@Pedido.PedidosDetalles.Count()" readonly />
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Total</label>
+						<input type="number" class="form-control text-secondary" value="@Pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)" />
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card-footer text-center">
+			<a href="/index" class="btn btn-secondary">
+				<span class="bi bi-arrow-left"></span> Volver
+			</a>
+
+			<button type="button" class="btn btn-primary" @onclick="Guardar">
+				<span class="bi bi-save"></span> Guardar
+			</button>
+
+			@if (PedidoId.HasValue)
+			{
+				<button type="button" class="btn btn-danger" @onclick="MostrarModal">
+					<span class="bi bi-trash"></span> Eliminar
+				</button>
+			}
+		</div>
+	</div>
+</div>
+
+@if (mostrarModal)
+{
+	<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header bg-danger text-white">
+					<h5 class="modal-title">Confirmar eliminaci&oacute;n:</h5>
+				</div>
+
+				<div class="modal-body">
+					<p>Est&aacute; seguro de eliminar el Pedido con el ID: <strong>@Pedido.PedidoId</strong>, del cliente <strong>@Pedido.NombreCliente</strong>?</p>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" @onclick="CerrarModal">
+						<span class="bi bi-arrow-left"></span> Volver
+					</button>
+
+					<button type="button" class="btn btn-danger " @onclick="Eliminar">
+						<span class="bi bi-trash"></span> Eliminar
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter]
+	public int? PedidoId { get; set; }
+	public string? errorMensaje;
+
+	// Lista de detalle
+	public List<Componente> ListaComponentes { get; set; } = new();
+	public Pedidos Pedido { get; set; } = new Pedidos();
+	public PedidosDetalle DetalleSeleccionado = new();
+
+	public bool mostrarModal = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		ListaComponentes = await pedidosService.ListarComponentes();
+
+		if (PedidoId is not null && PedidoId > 0)
+		{
+			Pedido = await pedidosService.Buscar(PedidoId.Value);
+		}
+	}
+
+	private async Task Guardar()
+	{
+		var created = await pedidosService.Guardar(Pedido);
+		if (created)
+		{
+			navigator.NavigateTo("/index");
+		}
+		else
+		{
+			errorMensaje = "No se pudo guardar o editar el pedido correctamente. Intentelo de nuevo.";
+		}
+	}
+
+	private async Task AgregarDetalle()
+	{
+		errorMensaje = null;
+
+		if (Pedido.NombreCliente == null)
+		{
+			errorMensaje = "El nombre del cliente no puede ser vacio. Intentelo de nuevo";
+			return;
+		}
+		if (DetalleSeleccionado.ComponenteId == 0)
+		{
+			errorMensaje = "Debe seleccionar al menos 1 componente. Intentelo de nuevo.";
+			return;
+		}
+		if (DetalleSeleccionado.Precio <= 0)
+		{
+			errorMensaje = "El precio debe ser mayor que 0. Intentelo de nuevo.";
+			return;
+		}
+		if (DetalleSeleccionado.Cantidad <= 0)
+		{
+			errorMensaje = "La cantidad debe ser mayor a 0. Intentelo de nuevo.";
+			return;
+		}
+
+		var componente = ListaComponentes.Single(c => c.ComponenteId == DetalleSeleccionado.ComponenteId);
+
+		var detalle = new PedidosDetalle
+		{
+			ComponenteId = componente.ComponenteId,
+			Cantidad = DetalleSeleccionado.Cantidad,
+			Precio = DetalleSeleccionado.Precio
+		};
+
+		Pedido.PedidosDetalles.Add(detalle);
+		DetalleSeleccionado = new PedidosDetalle();
+		await Task.CompletedTask;
+	}
+
+	private void RemoverDetalle(PedidosDetalle detalle)
+	{
+		Pedido.PedidosDetalles.Remove(detalle);
+		DetalleSeleccionado = detalle;
+	}
+
+	private async Task Eliminar()
+	{
+		var eliminado = await pedidosService.Eliminar(Pedido.PedidoId);
+		if (eliminado)
+		{
+			navigator.NavigateTo("/index");
+		}
+		else
+		{
+			errorMensaje = "No se pudo eliminar el pedido correctamente. Intentelo de nuevo.";
+		}
+	}
+
+	private void MostrarModal()
+	{
+		mostrarModal = true;
+	}
+
+	private void CerrarModal()
+	{
+		mostrarModal = false;
+	}
+}

@@ -1,0 +1,157 @@
+﻿@page "/index"
+@inject PedidosService pedidosService
+@rendermode InteractiveServer 
+
+<PageTitle>Index de Pedidos</PageTitle>
+<div class="container">
+	<div class="card shadow-lg">
+		<div class="card-header d-flex justify-content-between align-items-center">
+			<h5><strong>Pedidos</strong></h5>
+			<a href="/form" class="btn btn-success">
+				<span class="bi bi-plus-square mt-3"></span> Crear
+			</a>
+		</div>
+
+		<div class="card-body">
+			<div class="row align-items-center g-3">
+
+				@* FECHA DESDE *@
+				<div class="col-3 col-sm-6 col-md-2">
+					<label class="col-form-label"><strong>Desde</strong></label>
+					<input type="date" class="form-control" @bind="FechaDesde" />
+				</div>
+
+				@* FECHA HASTA *@
+				<div class="col-4 col-sm-6 col-md-2">
+					<label class="col-form-label"><strong>Hasta</strong></label>
+					<input type="date" class="form-control" @bind="FechaHasta" />
+				</div>
+				
+				@* FILTRAR POR *@
+
+				<div class="col-2 col-sm-6 col-md-2">
+					<label class="col-form-label"><strong>Filtrar Por</strong></label>
+					<InputSelect class="form-select ms-0" @bind-Value="Filtro">
+						<option value="" selected disabled>Seleccione una opci&oacute;n:</option>
+						<option value="PedidoId">Pedido ID</option>
+						<option value="NombreCliente">Nombre Cliente</option>
+						<option value="Total">Total</option>
+					</InputSelect>
+				</div>
+
+				@* BUSQUEDA *@
+				<div class="col-5 col-sm-6 col-md-2">
+					<label class="col-form-label"><strong>B&uacute;squeda</strong></label>
+					<div class="input-group">
+						<input class="form-control" @bind="ValorFiltro" placeholder="Buscar" />
+						<button type="button" class="btn btn-outline-primary bi bi-search" @onclick="Buscar"></button>
+					</div>
+				</div>
+
+				<div class="col-2 col-sm-6 col-md-2">
+					<label class="col-form-label"></label>
+					<div class="input-group">
+						<button type="button" class="btn btn-outline-secondary bi bi-x-circle" @onclick="LimpiarFiltro"></button>
+					</div>
+				</div>
+			</div>
+
+			<div class="table-responsive mt-3">
+				<table class="table table-hover text-center align-middle">
+					<thead class="table table-striped text-black">
+						<tr>
+							<th>Fecha</th>
+							<th>Pedido ID</th>
+							<th>Nombre Cliente</th>
+							<th>Total</th>
+							<th>Opciones</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						@foreach (var pedido in ListaPedidos)
+						{
+							<tr>
+								<td>@pedido.Fecha.ToShortDateString()</td>
+								<td>@pedido.PedidoId</td>
+								<td>@pedido.NombreCliente</td>
+								<td>@pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)</td>
+								<td>
+									<a href="/form/@pedido.PedidoId" class="btn btn-outline-dark">
+										<span class="bi bi-pencil"></span>
+									</a>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="card-footer">
+			<div class="row">
+				<label>Total de pedidos: @ListaPedidos.Count()</label>
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	public DateTime? FechaDesde { get; set; }
+	public DateTime? FechaHasta { get; set; }
+	public string ValorFiltro { get; set; }
+	public string Filtro { get; set; }
+	public List<Pedidos> ListaPedidos = new List<Pedidos>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		ListaPedidos = await pedidosService.Listar(p => p.PedidoId > 0);
+	}
+
+	public async Task Buscar()
+	{
+		if (FechaDesde.HasValue && FechaHasta.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date >= FechaDesde.Value.Date && p.Fecha.Date <= FechaHasta.Value.Date
+			);
+		}
+		else if (FechaDesde.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date >= FechaDesde.Value.Date
+			);
+		}
+		else if (FechaHasta.HasValue)
+		{
+			ListaPedidos = await pedidosService.Listar(
+				p => p.Fecha.Date <= FechaHasta.Value.Date
+			);
+		}
+
+		if (!string.IsNullOrWhiteSpace(ValorFiltro))
+		{
+			if (Filtro == "PedidoId" && int.TryParse(ValorFiltro, out var pedidoId))
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.PedidoId == pedidoId);
+			}
+			if (Filtro == "NombreCliente")
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.NombreCliente.ToLower().Contains(ValorFiltro));
+			}
+			if (Filtro == "Total" && decimal.TryParse(ValorFiltro, out var total))
+			{
+				ListaPedidos = await pedidosService.Listar(p => p.Total == total);
+			}
+		}
+	}
+
+	private async Task LimpiarFiltro()
+	{
+		FechaDesde = null;
+		FechaHasta = null;
+		ValorFiltro = string.Empty;
+		Filtro = string.Empty;
+		ListaPedidos = await pedidosService.Listar(p => p.PedidoId > 0);
+	}
+}
