@@ -87,6 +87,7 @@ public class PedidosService(IDbContextFactory<Contexto> DbFactory)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
         return await contexto.Pedidos
+            .Include(p => p.PedidosDetalles)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.PedidoId == pedidoId);
     }

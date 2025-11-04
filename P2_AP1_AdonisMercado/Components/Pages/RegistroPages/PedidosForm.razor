@@ -7,26 +7,26 @@
 <div class="container">
 	<div class="card shadow-lg">
 		<div class="card-header text-center">
-				@if (PedidoId > 0)
-				{
-					<h5 class="card-title">Editar Pedido</h5>
-				}
-				else
-				{
-					<h5 class="card-title">Crear Pedido</h5>
-				}
+			@if (PedidoId > 0)
+			{
+				<h5 class="card-title"><strong>Editar Pedido</strong></h5>
+			}
+			else
+			{
+				<h5 class="card-title"><strong>Crear Pedido</strong></h5>
+			}
 		</div>
 
 		<div class="card-body">
-			<div class="mb-3 justify-content-between">
+			<div class="mb-3 d-flex justify-content-between">
 				<div class="mb-3">
-					<label class="form-label">Fecha</label>
-					<input type="date" class="form-control form-control-sm" @bind="Pedido.Fecha" />
+					<label class="form-label">Pedido ID</label>
+					<InputNumber class="form-control" @bind-Value="Pedido.PedidoId" readonly></InputNumber>
 				</div>
 
 				<div class="mb-3">
-					<label class="form-label">Pedido ID</label>
-					<InputNumber class="form-control form-control-sm" @bind-Value="Pedido.PedidoId" readonly></InputNumber>
+					<label class="form-label">Fecha</label>
+					<input type="date" class="form-control" @bind="Pedido.Fecha" />
 				</div>
 			</div>
 
@@ -36,6 +36,8 @@
 			</div>
 
 			@* PICKER DE DETALLE *@
+
+			<hr />
 
 			<div class="border border-success p-3 m-3">
 				<h3>Detalle</h3>
@@ -53,13 +55,13 @@
 						}
 					</InputSelect>
 
-					<label class="col-form-label input-group-text">Precio</label>
+					<label class="col-form-label input-group-text">Precio:</label>
 					<input type="number" class="form-control" @bind="DetalleSeleccionado.Precio" min="0" />
 
-					<label class="col-form-label input-group-text">Cantidad</label>
-					<input type="number" class="form-control" @bind="DetalleSeleccionado.Cantidad" min="0"/>
+					<label class="col-form-label input-group-text">Cantidad:</label>
+					<input type="number" class="form-control" @bind="DetalleSeleccionado.Cantidad" min="0" />
 
-					<button type="button" class="btn btn-outline-success">
+					<button type="button" class="btn btn-outline-success" @onclick="AgregarDetalle">
 						<span class="bi bi-plus-square"></span>
 					</button>
 				</div>
@@ -87,11 +89,11 @@
 						@foreach (var detalle in Pedido.PedidosDetalles)
 						{
 							<tr>
-								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)</td>
+								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)?.ComponenteId</td>
 								<td>@ListaComponentes.FirstOrDefault(c => c.ComponenteId == detalle.ComponenteId)?.Descripcion</td>
 								<td>@detalle.Precio</td>
 								<td>@detalle.Cantidad</td>
-								<td>@(detalle.Cantidad * detalle.Precio)</td>
+								<td>@(detalle.Cantidad* detalle.Precio)</td>
 								<td>
 									<button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoverDetalle(detalle)">
 										<span class="bi bi-trash"></span>
@@ -102,14 +104,13 @@
 					</tbody>
 				</table>
 
-				<div class="justify-content-between">
-					<div class="input-group">
-						<label class="form-control">Conteo</label>
-						<input type="number" class="form-control form-control-sm" value="@Pedido.PedidosDetalles.Count()"/>
+				<hr />
+				<div class="align-content-between">
+					<label class="form-label">Conteo</label>
+					<input type="number" class="form-control form-control-sm w-25 text-secondary" value="@Pedido.PedidosDetalles.Count()" readonly />
 
-						<label class="form-control">Total</label>
-						<input type="number" class="form-control form-control-sm" value="@Pedido.PedidosDetalles.Sum(p => p.Cantidad * p.Precio)" />
-					</div>
+					<label class="form-label">Total</label>
+					<input type="number" class="form-control form-control-sm w-25 text-secondary" value="@Pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)" />
 				</div>
 			</div>
 		</div>
@@ -119,13 +120,13 @@
 				<span class="bi bi-arrow-left"></span> Volver
 			</a>
 
-			<button type="button" class="btn btn-primary" @onclick="AgregarDetalle">
+			<button type="button" class="btn btn-primary" @onclick="Guardar">
 				<span class="bi bi-save"></span> Guardar
 			</button>
 
 			@if (PedidoId.HasValue)
 			{
-				<button type="button" class="btn btn-danger">
+				<button type="button" class="btn btn-danger" @onclick="MostrarModal">
 					<span class="bi bi-trash"></span> Eliminar
 				</button>
 			}
@@ -133,6 +134,32 @@
 	</div>
 </div>
 
+@if (mostrarModal)
+{
+	<div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header bg-danger text-white">
+					<h5 class="modal-title">Confirmar eliminaci&oacute;n:</h5>
+				</div>
+
+				<div class="modal-body">
+					<p>Est&aacute; seguro de eliminar el Pedido con el ID: <strong>@Pedido.PedidoId</strong>, del cliente <strong>@Pedido.NombreCliente</strong>?</p>
+				</div>
+
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" @onclick="CerrarModal">
+						<span class="bi bi-arrow-left"></span> Volver
+					</button>
+
+					<button type="button" class="btn btn-danger " @onclick="Eliminar">
+						<span class="bi bi-trash"></span> Eliminar
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
 @code {
 	[Parameter]
 	public int? PedidoId { get; set; }
@@ -148,7 +175,8 @@
 	protected override async Task OnInitializedAsync()
 	{
 		ListaComponentes = await pedidosService.ListarComponentes();
-		if (PedidoId != null && PedidoId.HasValue)
+
+		if (PedidoId is not null && PedidoId > 0)
 		{
 			Pedido = await pedidosService.Buscar(PedidoId.Value);
 		}
