@@ -105,12 +105,16 @@
 				</table>
 
 				<hr />
-				<div class="align-content-between">
-					<label class="form-label">Conteo</label>
-					<input type="number" class="form-control form-control-sm w-25 text-secondary" value="@Pedido.PedidosDetalles.Count()" readonly />
+				<div class="d-flex justify-content-between">
+					<div class="mb-3">
+						<label class="form-label">Conteo</label>
+						<input type="number" class="form-control text-secondary" value="@Pedido.PedidosDetalles.Count()" readonly 
+					</div>
 
-					<label class="form-label">Total</label>
-					<input type="number" class="form-control form-control-sm w-25 text-secondary" value="@Pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)" />
+					<div class="mb-3">
+						<label class="form-label">Total</label>
+						<input type="number" class="form-control text-secondary" value="@Pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)" />
+					</div>
 				</div>
 			</div>
 		</div>

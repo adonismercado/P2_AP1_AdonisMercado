@@ -67,7 +67,7 @@
 								<td>@pedido.Fecha.ToShortDateString()</td>
 								<td>@pedido.PedidoId</td>
 								<td>@pedido.NombreCliente</td>
-								<td>@pedido.Total</td>
+								<td>@pedido.PedidosDetalles.Sum(d => d.Cantidad * d.Precio)</td>
 								<td>
 									<a href="/form/@pedido.PedidoId" class="btn btn-outline-dark">
 										<span class="bi bi-pencil"></span>
@@ -82,7 +82,7 @@
 
 		<div class="card-footer">
 			<div class="row">
-				<label>Total: @ListaPedidos.Sum(p => p.Total)</label>
+				<label>Total de pedidos: @ListaPedidos.Count()</label>
 			</div>
 		</div>
 	</div>
