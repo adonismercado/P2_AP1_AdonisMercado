@@ -1,18 +1,19 @@
 ﻿@page "/index"
 @inject PedidosService pedidosService
+@rendermode InteractiveServer 
 
-<PageTitle>Index de Registros</PageTitle>
+<PageTitle>Index de Pedidos</PageTitle>
 <div class="container">
 	<div class="card shadow-lg">
 		<div class="card-header d-flex justify-content-between align-items-center">
-			<h5><strong>Registros</strong></h5>
+			<h5><strong>Pedidos</strong></h5>
 			<a href="/form" class="btn btn-success">
 				<span class="bi bi-plus-square mt-3"></span> Crear
 			</a>
 		</div>
 
 		<div class="card-body">
-			<div class="row align-items-center g-2">
+			<div class="row align-items-center g-3">
 
 				@* FECHA DESDE *@
 				<div class="col-3 col-sm-6 col-md-2">
@@ -28,7 +29,7 @@
 				
 				@* FILTRAR POR *@
 
-				<div class="col-2">
+				<div class="col-2 col-sm-6 col-md-2">
 					<label class="col-form-label"><strong>Filtrar Por</strong></label>
 					<InputSelect class="form-select ms-0" @bind-Value="Filtro">
 						<option value="" selected disabled>Seleccione una opci&oacute;n:</option>
@@ -39,11 +40,18 @@
 				</div>
 
 				@* BUSQUEDA *@
-				<div class="col-5">
+				<div class="col-5 col-sm-6 col-md-2">
 					<label class="col-form-label"><strong>B&uacute;squeda</strong></label>
 					<div class="input-group">
 						<input class="form-control" @bind="ValorFiltro" placeholder="Buscar" />
 						<button type="button" class="btn btn-outline-primary bi bi-search" @onclick="Buscar"></button>
+					</div>
+				</div>
+
+				<div class="col-2 col-sm-6 col-md-2">
+					<label class="col-form-label"></label>
+					<div class="input-group">
+						<button type="button" class="btn btn-outline-secondary bi bi-x-circle" @onclick="LimpiarFiltro"></button>
 					</div>
 				</div>
 			</div>
@@ -136,9 +144,14 @@
 				ListaPedidos = await pedidosService.Listar(p => p.Total == total);
 			}
 		}
-		else
-		{
-			ListaPedidos = await pedidosService.Listar(p => p.PedidoId > 0);
-		}
+	}
+
+	private async Task LimpiarFiltro()
+	{
+		FechaDesde = null;
+		FechaHasta = null;
+		ValorFiltro = string.Empty;
+		Filtro = string.Empty;
+		ListaPedidos = await pedidosService.Listar(p => p.PedidoId > 0);
 	}
 }
